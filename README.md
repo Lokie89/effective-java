@@ -154,6 +154,54 @@ public enum Elvis {
     Supplier 인터페이스는 매개값은 없고 리턴값이 있는 getXXX() 메서드를 가지고 있다.
     이 메서드들은 호출한 곳으로 데이터를 리턴( 공급 ) 하는 역할을 한다.
 
+#### item-6 불필요한 객체 생성을 피하라
+###### 정리
+    똑같은 기능의 객체를 매번 생성하기보다는 객체 하나를 재사용하는 편이 나을 때가 많다.
+    정적 팩터리 메서드를 제공하는 불변 클래스에서는 정적 팩터리 메서드를 사용해 불필요한 객체 생성을 피할 수 있다.
+    
+    '비싼 객체' 가 반복해서 필요하다면 캐싱하여 재사용하길 권한다.
+    인스턴스를 클래스 초기화 과정에서 직접 생성해 캐싱해두고, 
+    나중에 메서드가 호출될 때마다 이 인스턴스를 재사용한다.
+```java
+public class RomanNumerals {
+    static boolean isRomanNumeral(String s){
+        return s.matches("^(?=.)M*(C[MD]|D?C{0,3})"
+        +"(X[CL]|L?X{0,3})(I[XV]|V?I{0,3})$");
+    }
+}
+```
+```java
+public class RomanNumerals {
+     private static final Pattern ROMAN = Pattern.compile("^(?=.)M*(C[MD]|D?C{0,3})"
+                +"(X[CL]|L?X{0,3})(I[XV]|V?I{0,3})$");
+    
+    static boolean isRomanNumeral(String s){
+        return ROMAN.matcher(s).matches();
+    }
+}
+```
+    객체가 불변이라면 재사용해도 안전함이 명백하다.
+    
+    불필요한 객체를 만들어내는 또 다른 예로는 오토박싱이 있다.
+```java
+public class Sum {
+    private static long sum() {
+        Long sum = 0L; // 불필요한 박싱
+        for (long i = 0; i <= Integer.MAX_VALUE; i++) {
+            sum += i;
+        }
+        return sum;
+    }
+}
+```
+    불필요한 Long 선언으로 인스턴스를 계속 만들어낸다.
+    박싱된 기본 타입보다는 기본 타입을 사용하고, 의도치 않은은 오토박싱이 숨어들지 않도록 주의하자.
+    기존 객체를 재사용해야 한다면 새로운 객체를 만들지마라
+###### 내용 추가
+    * 어댑터
+        실제 작업은 뒷단 객체에 위임하고, 자신은 제 2의 인터페이스 역할을 해주는 객체
+    
+
 #### item-1
 ###### 정리
 ###### 내용 추가
