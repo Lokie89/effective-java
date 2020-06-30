@@ -70,6 +70,62 @@ class Main{
     *공변 반환 타입 :
         리턴 타입은 서브클래스라는 범위 안에서 다양할 수 있다.
 
+#### item-3 private 생성자나 열거 타입으로 싱글턴임을 보증하라
+###### 정리
+    싱글턴 생성방법
+        1. 생성자는 private 으로 감춰두고, public static 멤버 변수를 만들어 둔 후 사용
+            장점은 해당 클래스가 싱글턴임이 명백히 드러나며, 간결하다는 점
+```java
+public class Elvis {
+    public static final Elvis INSTANCE = new Elvis();
+
+    private Elvis(){}
+}
+```
+        2. 생성자는 private 으로 감춰두고, 정적 팩터리 메서드를 public static 으로 제공
+            장점은 *API 를 바꾸지 않고도 싱글턴이 아니게 변경할 수 있다는 점,
+                 정적 팩터리를 제네릭 싱글턴 팩터리로 만들 수 있다는 점
+```java
+public class Elvis {
+    private static final Elvis INSTANCE = new Elvis();
+
+    private Elvis(){}
+
+    public static Elvis getInstance(){
+        return INSTANCE;
+    }
+}
+```
+        3. 원소가 하나인 열거 타입으로 선언
+            장점 간결하고 추가 노력 없이 직렬화  가능 리플렉션 공격에도 완벽히 막아줌
+            그러나 싱글턴이 클래스를 상속해야 한다면 사용할 수 없다.
+```java
+public enum Elvis {
+    INSTANCE;
+}
+```
+    싱글턴의 공통적인 예외는,
+    리플렉션 API 인 AccessibleObject.setAccessible 을 사용해 private 생성자를 호출할 수 있다.
+    이러한 공격을 방어하려면 생성자를 수정하여 두 번째 객체가 생성되려 할 때 예외를 던지게 하면 된다.
+    
+    위의 1, 2 번 방식으로 만든 싱글턴 클래스를 직렬화 하려면
+    단순히 Serializable 을 구현한다고 선언하는 것만으로는 부족하다.
+    모든 인스턴스 필드를 일시적 ( transient ) 이라고 선언하고 **readResolve 메서드를 제공해야 한다.
+    그렇지 않으면 직렬화된 인스턴스를 역직렬화할 때마다 새로운 인스턴스가 생긴다.
+    
+###### 내용 추가
+    자바 직렬화 : 외부의 다른 자바 시스템에서 사용할 수 있도록 자바 객체나 데이터를 바이트 형태로 변환하는 기술
+    
+    * 정적 팩터리 메서드를 사용할 때 싱글턴이 아니게 변경 가능?
+    
+    ** readResolve
+        싱글턴 클래스가 직렬화 가능한 클래스가 되기 위해 Serializable 인터페이스를 구현하는 순간,
+        그 클래스는 싱글턴이 아니게 된다. 직렬화를 통해 초기화해둔 인스턴스가 아닌 다른 인스턴스가 반환되기 때문
+        readResolve 메서드를 직접 정의하여 역직렬화 과정에서 만들어진 인스턴스 대신에
+        기존에 생성된 싱글턴 인스턴스를 반환하도록 하면 된다.
+        만약 역직렬화 과정에서 자동으로 호출되는 readObject 메서드가 있더라도
+        readResolve 메서드에서 반환한 인스턴스로 대체된다.
+        
 #### item-1
 ###### 정리
 ###### 내용 추가
