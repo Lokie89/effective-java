@@ -2,9 +2,9 @@ package item6;
 
 public class Sum {
     private static long sum() {
-        Long sum = 0L;
+        Long sum = 150L;
         for (long i = 0; i <= 10; i++) {
-            sum += i;
+            sum += 0;
             System.out.println(System.identityHashCode(sum));
         }
         return sum;

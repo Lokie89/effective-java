@@ -225,6 +225,112 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 ```
     실제 HashMap 이 구현하고 있는 keySet 메서드
 
+    Long 객체가 실제로 만들어 지나?
+    - 위의 예시 중 Sum 클래스의 Long 객체의 연산 과정에서 실제로 Long 객체가 만들어 진다는 사실을 찾아내기 위해
+      주소값을 출력해봤다.
+      기본 주소값을 출력하는 메서드는 hashCode() 메서드 이지만 이미 래퍼클래스에서 오버라이드 하여 실제 데이터 값을 출력하게 해놓음
+      따라서 System.identityHashCode() 메서드를 사용하여 integer 로 리턴되는 hashCode 출력
+      예시에 있는 그대로 출력해봤으나 Long 타입의 sum 을 long 타입으로 수정했을 때도 같은 hashCode 값을 출력
+      알고보니 Integer Long 모두 -128 ~ 127 까지의 값에서는 싱글턴 패턴 ? 으로 같은 객체를 리턴하고 있었음
+      
+######
+    실제 Integer 클래스 안에 정의된 IntegerCache 클래스
+    컴파일 단계에서 래핑 클래스를 언박싱 후 연산과정이 끝나고 다시 오토박싱 할때 아마? valueOf 메서드를 실행하는 것 같다.
+```java
+public final class Integer extends Number implements Comparable<Integer> {
+    public static Integer valueOf(int i) {
+        if (i >= IntegerCache.low && i <= IntegerCache.high)
+            return IntegerCache.cache[i + (-IntegerCache.low)];
+        return new Integer(i);
+    }
+    
+    private static class IntegerCache {
+        static final int low = -128;
+        static final int high;
+        static final Integer cache[];
+    
+        static {
+            // high value may be configured by property
+            int h = 127;
+            String integerCacheHighPropValue =
+                sun.misc.VM.getSavedProperty("java.lang.Integer.IntegerCache.high");
+            if (integerCacheHighPropValue != null) {
+                try {
+                    int i = parseInt(integerCacheHighPropValue);
+                    i = Math.max(i, 127);
+                    // Maximum array size is Integer.MAX_VALUE
+                    h = Math.min(i, Integer.MAX_VALUE - (-low) -1);
+                } catch( NumberFormatException nfe) {
+                    // If the property cannot be parsed into an int, ignore it.
+                }
+            }
+            high = h;
+    
+            cache = new Integer[(high - low) + 1];
+            int j = low;
+            for(int k = 0; k < cache.length; k++)
+                cache[k] = new Integer(j++);
+    
+            // range [-128, 127] must be interned (JLS7 5.1.7)
+            assert IntegerCache.high >= 127;
+        }
+    
+        private IntegerCache() {}
+    }
+}
+```
+    실제 Long 클래스 안에 정의된 LongCache 클래스
+```java
+public final class Long extends Number implements Comparable<Long> {
+
+    public static Long valueOf(long l) {
+        final int offset = 128;
+        if (l >= -128 && l <= 127) { // will cache
+            return LongCache.cache[(int)l + offset];
+        }
+        return new Long(l);
+    }
+
+    private static class LongCache {
+        private LongCache(){}
+
+        static final Long cache[] = new Long[-(-128) + 127 + 1];
+
+        static {
+            for(int i = 0; i < cache.length; i++)
+                cache[i] = new Long(i - 128);
+        }
+    }
+}
+```
+    동일성 검사
+```java
+public class WrapperClass {
+    public static void main(String[] args) {
+        Integer a = 1;
+        Integer b = 1;
+
+        Integer c = 150;
+        Integer d = 150;
+
+        int e = 150;
+        int f = 150;
+
+        System.out.println(a==b); // true
+        System.out.println(c==d); // false
+        System.out.println(e==f); // true
+
+    }
+}
+```
+    동일성 검사로 같은 객체인지 아닌지를 알 수 있다.
+    
+    추가로 VM option 수정 시 캐싱 할 수 있는 범위의 max 값을 유동적으로 변경 할 수 있다고 함.
+    https://www.thegeekyway.com/java-autoboxing-xxautoboxcachemax/
+    
+    -- 해시코드 값은 wrapper class 와 primitive type 일 때 모두 동일하게 캐싱 범위 밖이면 같은 숫자여도 다르게 나타났다.
+       생각해보니 당연한거였다.
+       
 # item-7 다 쓴 객체 참조를 해제하라
 #### 정리
     메모리 누수 : 애플리케이션이 필요하지 않은 메모리를 계속 점유하고 있는 현상
