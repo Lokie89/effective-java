@@ -492,6 +492,121 @@ public class BufferedReader extends Reader {
 }
 ```
 
+# item-10 equals 는 일반 규약을 지켜 재정의하라
+#### 정리
+    equals 메서드는 재정의하기 쉬워 보이지만 곳곳에 함정이 도사리고 있어서 자칫하면 끔찍한 결과를 초래한다.
+    다음과 같은 상황이라면 재정의하지 않는 것이 최선이다.
+        - 각 인스턴스가 본질적으로 고유하다. 값을 표현하는 게 아니라 동작하는 개체를 표현하는 클래스 ( Thread 등 )
+        - 인스턴스의 논리적 동치성을 검사할 일이 없다.
+        - 상위 클래스에서 재정의한 equals 가 하위 클래스에도 딱 들어맞는다.
+        - 클래스가 private 이거나 package-private 이고 equals 메서드를 호출할 일이 없다.
+        
+    equals 는 논리적 동치성을 확인해야 할 때 재정의하여 사용한다.
+    보통 값이 두 값 객체를 equals 로 비교하는 프로그래머는 객체가 같은지가 아니라 값이 같은지를 알고 싶어한다.
+    equals 가 논리적 동치성을 확인하도록 재정의해두면, *Map의 키와 Set 의 원소로 사용할 수 있게 된다.
+    
+    equals 메서드를 재정의할 때 따라야 하는 일반 규약
+    
+    1. 반사성 : null 이 아닌 모든 참조 값 x에 대해, x.equals(x) 는 true
+        반사성은 단순히 말하면 객체는 자기 자신과 같아야 한다는 뜻이다.
+        
+    2. 대칭성 : null 이 아닌 모든 참조 값 x, y 에 대해 x.equals(y) 가 true 면 y.equals(x) 도 true
+        대칭성은 두 객체는 서로에 대한 동치 여부에 똑같이 답해야 한다는 뜻
+        
+    3. 추이성 : null 이 아닌 모든 참조 값 x, y, z 에 대해, x.equals(y) 가 true 이고
+               y.equals(z) 도 true 면 x.equals(z) 도 true
+        추이성은 첫 번째 객체와 두 번째 객체도 같고, 두 번째 객체와 세 번째 객체가 같다면,
+        첫 번째 객체와 세 번째 객체가 같아야 한다는 뜻
+        객체지향의 추상화 이점을 포기하지 않는 한 구체 클래스를 확장해 새로운 값을 추가하면서
+        equals 규야글 만족시킬 방법은 존재하지 않는다.
+        instanceof 검사를 getClass 의 동일 비교를 사용한다면 ( 상속 관계에 있더라도 완벽히 같은 클래스가 아니면 false 반환 )
+        가능하지만 이는 리스코프 치환 원칙 ( 어떤 타입의 중요한 속성은 그 하위 타입에서도 중요하다 
+        따라서 그 타입의 메서드는 하위 타입에서도 똑같이 잘 작동해야 한다. ) 의 원칙에 위배된다.
+        
+        이 문제를 해결할 우회 방법 중 하나는 상속 대신 해당 타입을 필드로 갖고 해당 타입을 반환하는 메서드를 만드는 것이다. 
+        
+    4. 일관성 : null 이 아닌 모든 참조 값 x, y에 대해 x.equals(y) 를 반복해서 호출하면 항상 true 또는 false 반환
+        일관성은 두 객체가 같다면 앞으로도 영원히 같아야 한다는 뜻
+        클래스가 불변이든 가변이든 equals 의 판단에 신뢰할 수 없는 자원이 끼어들게 해서는 안 된다.
+    5. null-아님 : null 이 아닌 모든 참조 값 x에 대해 x.equals(null) 은 false
+    
+    equals 메서드 구현 방법
+        1. == 연산자를 이용해 입력이 자기 자신의 참조인지 확인한다.
+            이는 성능 최적화를 위한 로직
+        2. instanceof 연산자로 입력이 올바른 타입인지 확인한다.
+        3. 입력을 올바른 타입으로 형변환한다.
+        4. 입력 객체와 자기 자신의 대응되는 '핵심' 필드들이 모두 일치하는지 하나씩 검사한다.
+        
+    equals 를 다 구현했다면 대칭적인지, 추이성이 있는지, 일관적인지 를 검사하자.
+    
+    equals 재정의시 주의사항
+        - equals 를 재정의할 떈 hashCode 도 반드시 재정의
+        - 너무 복잡하게 해결하려고 하지 말것
+        - Object 타입 외에 다른 매개변수를 갖는 equals 메서드는 선언하지 말것
+    
+#### 내용 추가
+    *Map의 키와 Set 의 원소로 사용
+    Map 을 구현하는 클래스들은 ( e.g) HashMap ) 
+    put 메서드를 시행할 때 Key 값의 hashCode 를 비교하고 key 의 equals 도 비교한다??
+    https://wedul.site/243 
+```java
+public class HashMap<K,V> extends AbstractMap<K,V>
+    implements Map<K,V>, Cloneable, Serializable {
+    public V put(K key, V value) {
+        return putVal(hash(key), key, value, false, true);
+    }
+
+    static final int hash(Object key) {
+        int h;
+        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+    }
+
+    final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
+                   boolean evict) {
+        Node<K,V>[] tab; Node<K,V> p; int n, i;
+        if ((tab = table) == null || (n = tab.length) == 0)
+            n = (tab = resize()).length;
+        if ((p = tab[i = (n - 1) & hash]) == null)
+            tab[i] = newNode(hash, key, value, null);
+        else {
+            Node<K,V> e; K k;
+            if (p.hash == hash &&
+                ((k = p.key) == key || (key != null && key.equals(k))))
+                e = p;
+            else if (p instanceof TreeNode)
+                e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
+            else {
+                for (int binCount = 0; ; ++binCount) {
+                    if ((e = p.next) == null) {
+                        p.next = newNode(hash, key, value, null);
+                        if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
+                            treeifyBin(tab, hash);
+                        break;
+                    }
+                    if (e.hash == hash &&
+                        ((k = e.key) == key || (key != null && key.equals(k))))
+                        break;
+                    p = e;
+                }
+            }
+            if (e != null) { // existing mapping for key
+                V oldValue = e.value;
+                if (!onlyIfAbsent || oldValue == null)
+                    e.value = value;
+                afterNodeAccess(e);
+                return oldValue;
+            }
+        }
+        ++modCount;
+        if (++size > threshold)
+            resize();
+        afterNodeInsertion(evict);
+        return null;
+    }
+}
+```
+        
+
 # item-1
 #### 정리
 #### 내용 추가
