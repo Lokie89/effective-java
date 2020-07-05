@@ -434,6 +434,64 @@ public class WeakHashMapTest {
     + 정적이 아닌 중첩 클래스는 자동으로 바깥 객체의 참조를 갖게 됨
     + 람다 역시 바깥 객체의 참조를 갖기 쉬움
     
+# item-9 try-finally 보다는 try-with-resources 를 사용하라
+#### 정리
+    자바 라이브러리에는 close 메서드를 호출해 직접 닫아줘야 하는 자원이 많다. ( 회수 )
+    이런 닫기는 클라이언트가 놓치기 쉬워서 예측할 수 없는 성능 문제로 이어지기도 한다.
+    
+    전통적으로 닫기 자원을 사용해야 하는 객체들은 try-finally 구문을 사용했다.
+    예외는 try 블록 ( 객체의 메서드 사용 )과 finally 블록 ( 객체의 close 메서드 사용 ) 모두 발생할 수 있는데
+    두 블록에서 예외가 모두 발생할 경우 두번째 예외가 첫 번째 예외를 완전히 집어삼켜 버린다.
+    그러면 스택 추적 내역에 첫 번째 예외에 관한 정보는 남지 않게 되어, 실제 시스템에서의 디버깅을 몹시 어렵게 한다.
+    
+    이러한 문제를 자바 7에서 나온 try-with-resources 구조로 해결할 수 있게 되었다.
+    이 구조를 사용하려면 해당 자원이 AutoCloseable 인터페이스를 구현해야 한다.
+    try-with-resources 는 짧고 읽기 수월할 뿐 아니라 문제를 진단하기도 좋다.
+    위에 예시처럼 try, finally 블록에서 모두 예외가 발생할 경우 
+    finally 에서 발생한 예외는 숨겨지고 try 에서 발생한 예외가 기록된다.
+    물론 숨계진 예외들도 그냥 버려지지 않고, 스택 추적 내역에 숨겨졌다는 꼬리표를 달고 출력된다.
+    getSuppressed 메서드를 사용하여 가져올 수 있음.
+    
+#### 내용 추가
+    AutoCloseable 인터페이스를 구현함.
+    try-with-resources 구조를 사용하여 호출
+```java
+public class TryWithResourcesTest implements AutoCloseable{
+    @Override
+    public void close() {
+        System.out.println("닫혔어!");
+    }
+}
+public class TryWithResourceTestMain {
+    public static void main(String[] args) {
+        try(TryWithResourcesTest test = new TryWithResourcesTest();) {
+
+        }
+    }
+}
+```
+    훨씬 더 간결하며 close 메서드를 자동으로 호출해줌.
+    
+    e.g ) BufferedReader class
+    Reader 를 상속 받고 있으며 Reader 는 AutoCloseable 을 상속하고 있는 Closeable 을 구현하고 있음
+    BufferedReader 의 close 메서드
+```java
+public class BufferedReader extends Reader {
+    public void close() throws IOException {
+        synchronized (lock) {
+            if (in == null)
+                return;
+            try {
+                in.close();
+            } finally {
+                in = null;
+                cb = null;
+            }
+        }
+    }
+}
+```
+
 # item-1
 #### 정리
 #### 내용 추가
