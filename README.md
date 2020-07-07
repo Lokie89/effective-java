@@ -605,7 +605,68 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 }
 ```
+    - Integer 가 키 값인 HashMap 은 다른 해시코드를 가져도 같은 결과값을 반환
+```java
+public class Item10Add {
+    public static void main(String[] args) {
+        Map<Integer, String> map = new HashMap<>();
+        Integer a = 150;
+        Integer b = 150;
 
+        System.out.println(System.identityHashCode(a)); // 1712536284
+        System.out.println(System.identityHashCode(b)); // 2080166188
+
+
+        System.out.println(a.equals(b)); // true
+
+        map.put(a, "150");
+
+        System.out.println(map.get(b)); // 150
+    }
+}
+```
+    - 객체가 키 값인 HashMap 의 equals 와 hashCode 를 재정의 했을 때 같은 결과값을 반환
+```java
+public class MapTestObject {
+    String a;
+    Integer b;
+
+    public MapTestObject(String a, Integer b) {
+        this.a = a;
+        this.b = b;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof MapTestObject)) {
+            return false;
+        }
+        MapTestObject mapTestObject = (MapTestObject) obj;
+        return mapTestObject.a.equals(a) && mapTestObject.b.equals(b);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 0;
+        result = 31 * result + a.hashCode();
+        result = 31 * result + b.hashCode();
+        return result;
+    }
+}
+
+public class MapTestObjectTest {
+    public static void main(String[] args) {
+        Map<MapTestObject, String> map = new HashMap<>();
+        map.put(new MapTestObject("test", 300), "TEST");
+        
+        // equals 또는 hashCode 재정의 되지 않았을 때 null 반환
+        System.out.println(map.get(new MapTestObject("test", 300)));
+    }
+}
+```
 # item-11 equals 를 재정의하려거든 hashCode 도 재정의하라
 #### 정리
     equals 를 재정의한 클래스 모두에서 hashCode 도 재정의해야 한다.
