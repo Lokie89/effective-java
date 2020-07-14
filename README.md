@@ -774,6 +774,11 @@ public class MapTestObjectTest {
     public 클래스의 필드 중 예외로 public 인 필드는 public static final 로 선언되는 상수 필드다.
     상수 필드는 반드시 기본 타입 값이나 불변 객체를 참조해야 한다.
 
+# item-16 public 클래스에서는 public 필드가 아닌 접근자 메서드를 사용하라.
+#### 정리
+    public 클래스는 절대 가변 필드를 직접 노출해서는 안 된다.
+    그러나 package-private 클래스나 private 중첩 클래스에서는 종종 필드를 노출하는 편이 나을 때도 있다.
+
 # item-1
 #### 정리
 #### 내용 추가
