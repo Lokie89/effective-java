@@ -1055,6 +1055,44 @@ public abstract class AbstractCollection<E> implements Collection<E> {
     instanceof 연산자는 로타입과 비한정적 와일드카드 외에는 적용하지 못하게 되어있으며,
     와일드카드의 <?> 는 로타입과 똑같이 동작하기 때문에 생략하는 편이 더 낫다.
 
+# item-27 비검사 경고를 제거하라
+#### 정리
+    제네릭을 사용하면 컴파일러 경고를 볼 수 있다.
+    컴파일러가 알려주는 비검사 경고는 최대한 제거하는 편이 좋다.
+    경고를 제거할 수는 없지만 타입이 안전하다고 판단되면 @SuppressWarning("unchecked") 어노테이션을 사용한다.
+    @SuppressWarning 어노테이션은 최대한 작은 범위에서 사용하는 편이 좋다.
+    최대한 명확한 비검사 경고를 제공하기 위해서다.
+    메서드 안의 지역변수에도 할당할 수 있다.
+    
+    e.g )
+    ArrayList 클래스의 toArray 메서드 중 타입 캐스팅 을 사용하는 Arrays.copyOf 메서드를 리턴하기 전
+    지역변수를 선언하고 비검사 경고를 제거할 수 있다. 
+```java
+public class ArrayList<E> extends AbstractList<E>
+        implements List<E>, RandomAccess, Cloneable, java.io.Serializable
+{
+    public <T> T[] toArray(T[] a) {
+        if (a.length < size)
+            // Make a new array of a's runtime type, but my contents:
+            return (T[]) Arrays.copyOf(elementData, size, a.getClass());
+            
+            // 지역변수에서 비검사 경고 제거
+            @SuppressWarnings("unchecked") T[] result = (T[]) Arrays.copyOf(elementData, size, a.getClass());
+            return result;
+        System.arraycopy(elementData, 0, a, 0, size);
+        if (a.length > size)
+            a[size] = null;
+        return a;
+    }
+}
+```
+    
+    비검사 경고를 제거할 때 확실한 타입이 검증되지 않은 상태에서 사용하면 컴파일은 되지만 런타임에서 CastClassException 이 날수 있다.
+    또한 확실한 타입이 검증되었으나 비검사 경고를 제거하지 않으면 다른 오류들을 반환하지 않고 비검사 경고만 반환하기 때문에
+    자칫 중요한 경고를 알지 못할 수 있다.
+    
+    비검사 경고를 제거할 때는 주석으로 다음 프로그래머에게 알려줄 이유를 남겨야 한다.
+
 # item-1
 #### 정리
 #### 내용 추가
