@@ -1175,6 +1175,88 @@ public class ArrayList<E> extends AbstractList<E>
     개발자가 안전하다고 판단하고 @SafeVarargs 를 선언하거나 
     제네릭 타입을 사용하는 메서드에서는 가변인자가 아닌 List 타입으로 변환해 넘기는 것이다.
 
+# item-33 타입 안전 이종 컨테이너를 고려하라
+#### 정리
+    컨테이너 대신 키를 매개변수화한 다음, 컨테이너 에 값을 넣거나 뺄 때 매개변수화한 키를 함께 제공하면 된다.
+    제네릭 타입 시스템이 값의 타입이 키와 같음을 보장해줄 것이다.
+    이런 설계 방식을 타입 안전 이종 컨테이너 패턴이라 함.
+    
+    예시로 든 Favorites 클래스를 보면, 각 타입의 Class 객체를 매개변수화하여 키 역할로 사용하는데
+    이는 class의 클래스가 제네릭이기 때문에 동작한다.
+    예컨데 *String.class 는 Class<String> 이고 Interger.class 는 Class<Integer> 이다.
+    컴파일 타입 정보와 런타임 타입 정보를 알아내기 위해 메서드들이 주고받는 class 리터럴을 타입 토큰이라 한다.
+    여기선 Class<T> type
+    
+    Favorites 클래스의 favorites 필드는 Map<Class<?>, Object> 타입으로 정의되었는데
+    Object 는 결국 키와 값 사이의 타입 관계를 보증하지 않는다는 뜻이다.
+    개발자는 이 필드에 담을 키와 값이 같은 타입을 보증할 것이라는 것을 알지만 자바에는 명시할 방법이 없다.
+    따라서 더 안정적인 타입을 보장하기 위해서 Class 의 cast 메서드 ( 동적 형변환 ) 를 이용하여 구현할 수 있다.
+    이러한 방식을 적용한 메서드는 Collections 의 checkedSet, checkedList, checkedMap 등 이다.
+    
+    cast 메서드는 실체화 불가 타입에는 사용할 수 없다.
+    제네릭을 포함한 클래스는 e.g ) List<String> 과 List<Integer> 는 결국 같은 List 클래스라는 같은 객체를 공유하므로
+    객체 내부는 아수라장이 될 것이다.
+    이 방법을 슈퍼타입 토큰으로 해결할 수 있는 방법이 있지만, 완벽하지 않은 방법이니 주의해야 한다.
+     
+```java
+public class Favorites {
+
+    Map<Class<?>, Object> favorites = new HashMap<>();
+
+    public <T> void putFavorite(Class<T> type, T instance) {
+        favorites.put(type, instance);
+    }
+
+    public <T> T getFavorite(Class<T> type) {
+        return type.cast(favorites.get(type));
+    }
+
+    public static void main(String[] args) {
+        Favorites f = new Favorites();
+        f.putFavorite(String.class, "Java");
+        f.putFavorite(Integer.class, 0xcafebabe);
+        f.putFavorite(Class.class, Favorites.class);
+
+        String favoriteString = f.getFavorite(String.class);
+        Integer favoriteInteger = f.getFavorite(Integer.class);
+        Class favoriteClass = f.getFavorite(Class.class);
+
+        System.out.printf("%s %x %s%n", favoriteString, favoriteInteger, favoriteClass.getName());
+    }
+}
+```
+    Class 클래스
+    ** native
+```java
+public final class Class<T> implements java.io.Serializable,
+                              GenericDeclaration,
+                              Type,
+                              AnnotatedElement {
+    @SuppressWarnings("unchecked")
+    @HotSpotIntrinsicCandidate
+    public T cast(Object obj) {
+        if (obj != null && !isInstance(obj))
+            throw new ClassCastException(cannotCastMsg(obj));
+        return (T) obj;
+    }
+
+    @HotSpotIntrinsicCandidate
+    public native boolean isInstance(Object obj);
+
+}
+```
+#### 내용 추가
+    * .class
+        Class 를 반환하는 메서드
+        Class 에는 리플렉션을 통해 field, method, package, constructor 등 클래스의 정보를 반환해주는
+        메서드들이 존재한다.
+    ** JNI ( Java Native Interface )
+        운영체제의 모든 기능을 JVM 이 담기 못하기 때문에,
+        운영체제의 고유기능을 Java 메서드와 연결해주는 것
+    *** 슈퍼 타입 토큰
+        http://gafter.blogspot.com/2006/12/super-type-tokens.html
+        https://yangbongsoo.gitbook.io/study/super_type_token
+        
 # item-1
 #### 정리
 #### 내용 추가
