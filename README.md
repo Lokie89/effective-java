@@ -1281,6 +1281,57 @@ public final class Class<T> implements java.io.Serializable,
     순서에 종속 될 뿐아니라, 같은 값을 갖는 객체를 더 생성할 수 없기 때문이다.
     따라서 ordinal() 메서드를 이용하는 것보다는 인스턴스 필드를 따로 만들어서 사용하는 편이 좋다( 해야 한다 ).
 
+# item-36 비트 필드 대신 EnumSet 을 사용하라
+#### 정리
+    열거한 값들이 주로 집합으로 사용될 경우, 각 *상수에 서로 다른 2의 거듭제곱 값을 할당한 정수 열거 패턴을 사용해 왔다.
+    비트별 OR 를 사용해 여러 상수를 하나의 집합으로 모을 수 있으며, 이렇게 만들어진 집합을 비트 필드라 한다.
+    
+    비트 필드 값이 그대로 출력되면 단순한 정수 열거 상수를 출력할 때보다 해석하기 어렵고, 비트 필드에 녹아있는 모든 원소를
+    순회하기도 힘들며, 최대 몇 비트가 필요한지 미리 예측해서 사용해야 한다 ( int 쓸건지 long 쓸건지 )
+    이런 문제들 때문에 EnumSet 을 사용하는 것이 좋다.
+    EnumSet 은 열거 타입 상수의 값으로 구성된 집합을 효과적으로 표현해준다.
+    EnumSet도 내부는 비트 벡트로 구현되었다. 원소가 총 64개 이하라면, 
+    EnumSet 전체를 long 변수 하나로 표현하여 비트 필드에 비견되는 성능을 보여준다.
+    비트를 효율적으로 처리할 수 있는 산술 연산을 써서 구현했다.
+#### 내용 추가
+    *상수에 서로 다른 2의 거듭제곱 값을 할당한 정수 열거 패턴
+```java
+public class Text {
+    public static final int STYLE_BOLD = 1 << 0;
+    public static final int STYLE_ITALIC = 1 << 1;
+    public static final int STYLE_UNDERLINE = 1 << 2;
+    public static final int STYLE_STRIKETHROUGH = 1 << 3;
+
+    public static void applyStyles(int styles) {
+//        System.out.println(styles);
+        List<Integer> styleGroup = List.of(STYLE_BOLD, STYLE_ITALIC, STYLE_UNDERLINE, STYLE_STRIKETHROUGH);
+        List<Integer> applyStyles = new ArrayList<>();
+        while (styles != 0) {
+            for (int i = styleGroup.size() - 1; i >= 0; i--) {
+                if (styles >= styleGroup.get(i)) {
+                    applyStyles.add(styleGroup.get((i)));
+                    styles -= styleGroup.get(i);
+                }
+            }
+        }
+        System.out.println(applyStyles);
+    }
+
+    public static void main(String[] args) {
+        applyStyles(STYLE_BOLD | STYLE_ITALIC); // 3
+    }
+}
+```
+    https://ko.wikipedia.org/wiki/%EB%B9%84%ED%8A%B8_%ED%95%84%EB%93%9C
+    비트 필드(bit field)는 컴퓨터 프로그래밍에 쓰이는 자료 구조이다. 
+    수많은 인접 컴퓨터 메모리 위치들로 이루어져 있으며 일련의 비트를 보유하기 위해 할당되며 
+    하나의 비트나 여러 비트의 그룹의 주소를 참조할 수 있도록 저장된다.
+    비트 필드는 알려진 고정 비트 너비의 정수형을 표현하기 위해 흔히 사용된다.
+    
+    사용 예시를 찾을 수가 없었음
+    책 내용으로 보았을때 해당 값이 들어오면 해당 그룹 ( 상수로 정의한 ) 들을 돌면서
+    해당 값에 가장 근접한 ( 보다 크지않은 수중 가장 큰 수 ) 수를 추출하고 그에 맞는 상수를 뽑아내는 식으로
+    하면 원하는 데이터를 추출할 수 있을 것 같다.
 # item-1
 #### 정리
 #### 내용 추가
