@@ -1341,6 +1341,41 @@ public class Text {
     이를 EnumMap 으로 고치면 고유 값인 열거 타입을 키로 받고 그에 해당하는 내용을 값 형태로 가질 수 있으므로
     데이터 처리에 용이하다.
 
+# item-38 확장할 수 있는 열거 타입이 필요하면 인터페이스를 사용하라
+#### 정리
+    열거 타입을 확장하는 방법은 인터페이스를 사용하는 것이다.
+    예전에는 *타입 안전 열거 패턴을 사용하여 확장할 수 있었으나 열거타입은 그럴 수 없다.
+    
+    대부분의 상황에서 열거 패턴을 확장하는 건 좋지 않다.
+    또한 기반 타입과 확장된 타입들의 원소 모두를 순회할 방법도 마땅치 않다.
+    
+    이럼에도 불구하고 확장이 필요한 열거 타입을 사용해야 한다면 인터페이스를 사용하는 것이 좋다.
+    
+#### 내용 추가
+    *타입 안전 열거 패턴
+        블로그 발췌한 내용임
+        정의된 클래스를 private 생성자를 두고 상수로써 객체를 생성한다.
+        이렇게 정의한 객체는 단 하나뿐인 타입 안전 객체가 생성된다.
+```java
+public class TypeSafeEnumPattern {
+    private final String type;
+
+    private TypeSafeEnumPattern(String type) {
+        this.type = type;
+    }
+
+    @Override
+    public String toString() {
+        return type;
+    }
+
+    public static final TypeSafeEnumPattern TERMINAL = new TypeSafeEnumPattern("Terminal");
+    public static final TypeSafeEnumPattern PROCESS = new TypeSafeEnumPattern("Process");
+    public static final TypeSafeEnumPattern DECISION = new TypeSafeEnumPattern("Decision");
+
+}
+```
+
 # item-1
 #### 정리
 #### 내용 추가
