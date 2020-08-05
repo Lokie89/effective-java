@@ -1449,6 +1449,47 @@ public @interface RepeatableExceptionContainer {
     
     즉, 속성을 달아야 할 대상이 클래스이고 타입으로 지정하여 사용할 경우가 있다면 마커 인터페이스를 사용하는 편이 좋다.
 
+# item-42 익명 클래스보다는 람다를 사용하라
+#### 정리
+    예전 자바에서 함수 타입을 표현할 때는 추상 메서드를 하나만 담은 인터페이스를 사용했으나,
+    JDK 1.1 등장 이후 익명 클래스로 선언하여 사용하는 방법이 주로 쓰였다.
+    자바 8 이후에는 람다식이 등장하여 *타입 추론을 통한 간결한 코드가 완성됐다.
+    익명 클래스 -> 람다식
+```java
+public class Lambda {
+    List<String> words;
+
+    public void abstractClass() {
+        Collections.sort(words, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                return Integer.compare(o1.length(), o2.length());
+            }
+        });
+    }
+
+    public void lambda1() {
+        Collections.sort(words, (o1, o2) -> Integer.compare(o1.length(), o2.length()));
+    }
+
+    public void lambda2() {
+        Collections.sort(words, Comparator.comparingInt(String::length));
+    }
+
+    public void lambda2_listMethod() {
+        words.sort(Comparator.comparingInt(String::length));
+    }
+}
+```
+    람다식은 타입 추론 방식을 통하여 컴파일 단계에서 타입을 결정하기 때문에
+    만약 컴파일러가 타입을 결정하지 못한다면 프로그래머가 직접 명시해줘야 한다.
+    또한 제네릭을 사용할 경우 타입 정보를 대부분 제네릭에서 얻기 때문에 꼭 명시해줘야 한다.
+    
+    람다는 간결하지만 길어지면 가독성이 떨어지며, 이름이 없기 때문에 코드 자체로 명확히 설명되지 않을 때는
+    사용을 피해야 한다. 또 추상메서드를 하나만 정의한 인터페이스 타입에서만 사용할 수 있다.
+    자신을 참조할 수 없으며 자신을 가리키는 this 키워드는 바깥 인스턴스를 가리킨다.
+    **직렬화 형태가 구현별로 다를 수 있다.
+
 # item-1
 #### 정리
 #### 내용 추가
