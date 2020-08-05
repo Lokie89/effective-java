@@ -1376,6 +1376,58 @@ public class TypeSafeEnumPattern {
 }
 ```
 
+# item-39 명명 패턴보다 애너테이션을 사용하라
+#### 정리
+    예전 도구나 프레임워크는 명명패턴을 사용해왔다.
+    JUnit 3 으로 예시를 들자면 test 가 이름에 포함된 메서드만 test 를 진행했다.
+    이러한 명명 패턴에는 여러가지의 단점이 있다.
+    오타가 나면 안되고, 올바른 프로그램 요소에서만 사용된다는 보증이 없으며, 프로그램 요소를 매개변수로 전달할 방법이 없다는 것이다.
+    이 모든 이유는 메서드의 실행이 이름에 너무 종속되기 때문이다.
+    
+    이러한 단점들을 애너테이션이 해결해준다.
+    애너테이션 작성 방법은
+    @interface 를 정의하고
+    @Retention 메타애너테이션으로 유지 정책과
+    @Target 메타애너테이션으로 사용될 선언부를 정의한다.
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Test {
+}
+```    
+    이렇게 애너테이션을 정의하고 사용할 부분에 태그하면 가능하다.
+    또한 요소를 매개변수로 전달하고 싶은 경우에는
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface ExceptionTest {
+    Class<? extends Throwable> value();
+}
+```
+    이와 같은 방법으로 ( 위에선 Class ) 정의하면 된다.
+    해당 매개변수는 리플렉션 API 를 통하여 제공받은 메서드의 isAnnotationPresent 메서드를 통하여 확인할 수 있다.
+    
+    이로써 위에서 명명 패턴의 단점으로 제시한
+    오타, 정확한 사용 메서드 지정, 매개변수 전달 이 모두 해결 되었다.
+    
+    추가로 애너테이션에는 @Repeatable 메타애너테이션도 지정할 수 있는데 이는 여러번 반복하여 사용할 수 있도록 하는것이다.
+    작성 방법은 정의한 애너테이션의 배열을 매개변수로 갖는 애너테이션 컨테이너를 따로 만들고
+    애너테이션 컨테이너를 @Repeatable 매개변수로 지정한다.
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@Repeatable(RepeatableExceptionContainer.class)
+public @interface RepeatableExceptionTest {
+    Class<? extends Throwable> value();
+}
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface RepeatableExceptionContainer {
+    RepeatableExceptionTest[] value();
+}
+``` 
+
 # item-1
 #### 정리
 #### 내용 추가
