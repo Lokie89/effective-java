@@ -1490,6 +1490,35 @@ public class Lambda {
     자신을 참조할 수 없으며 자신을 가리키는 this 키워드는 바깥 인스턴스를 가리킨다.
     **직렬화 형태가 구현별로 다를 수 있다.
 
+# item-43 람다보다는 메서드 참조를 사용하라
+#### 정리
+    람다가 익명 클래스보다 나은 점 중 하나는 간결함이다.
+    그러나 람다도 매개변수를 표현하는 부분에서 거추장스러움이 존재한다.
+    람다대신 메서드 참조를 이용하면 이 부분도 해결할 수 있다.
+    람다 : map.merge(key, 1, (count, incr) -> count + incr)
+    메서드참조 : map.merger(key, 1, Integer::sum)
+    
+    메서드참조는 크게 
+    정적 메서드 참조, 한정적 메서드 참조, 비한정적 메서드 참조, 팩토리 메서드 참조 로 나뉜다.
+    
+    정적 메서드 참조는 Integer 클래스의 sum, parseInt 등으로 함수 객체가 받는 인수와 참조되는 메서드가 받는 인수가 똑같다.
+    e.g ) (String x) -> Integer.parseInt(x), (Integer x, Integer y) -> Integer.sum(x, y)
+    
+    한정적 메서드 참조는 인스턴스 메서드 사용으로 정적 메서드와 같이 함수 객체가 받는 인수와 참조되는 메서드가 받는 인수가 똑같다.
+    e.g ) (Long x) -> memberRepository.findById(x), (String x) -> member.setCountry(x)
+    
+    비한정적 메서드 참조는 함수 객체를 적용하는 시점에 수신 객체를 알려준다.
+    e.g ) (Instant x) -> x.toEpochMilli(), (Optional<BigDemical> x) -> x.isPresent()
+    
+    팩터리 메서드 참조는 클래스 또는 배열 생성자를 사용한다.
+    e.g ) () -> new TreeMap<K,V>(), (int len) -> new int[len]
+    
+    메서드 참조가 람다보다 더 짧고 "명확"할때 사용하는 편이 좋다.
+    람다가 더 유용할 경우
+    service.execute(GoshThisClassNameIsHumongous::action);
+    service.execute(() -> action());
+    위에서는 메서드 참조가 더 길어 람다식이 더 유용하다.
+
 # item-1
 #### 정리
 #### 내용 추가
