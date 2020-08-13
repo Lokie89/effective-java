@@ -1692,6 +1692,67 @@ public class Lambda {
     이 내용에서 검사 자체를 염두해 두고 매개변수의 제약을 둔다고 생각하면 안되며,
     매개변수는 넓게 가지되 유효성 검사를 철저히 하는것으로 생각해야 한다.
 
+# item-50 적시에 방어적 복사본을 만들라
+#### 정리
+    클라이언트가 여러분의 불변식을 깨뜨리려고 가정하고 방어적으로 프로그래밍 해야 한다.
+    어떤 경우든 적절치 않은 클라이언트로부터 클래스를 보호하는 데 충분한 시간을 투자하는게 좋다.
+    
+    클라이언트가 주입한 객체를 수정할 수 있다.
+```java
+public class AttackPeriod {
+    public static void main(String[] args) {
+        Date start = new Date();
+        Date end = new Date();
+        Period p = new Period(start, end);
+        end.setYear(78);
+    }
+}
+```
+    반환되는 인스턴스를 수정할 수 있다.
+```java
+public class AttackPeriod {
+    public static void main(String[] args) {
+        Date start = new Date();
+        Date end = new Date();
+        Period p = new Period(start, end);
+        p.end().setYear(78);
+    }
+}
+```
+    이러한 과정들을 통해 클라이언트는 불변으로 작성되었다고 생각하는 객체들도 수정할 수 있다.
+    
+    그러므로 주입시, 반환시 복사한 객체를 사용해야 한다.
+```java
+public final class Period {
+    private final Date start;
+    private final Date end;
+
+    public Period(Date start, Date end) {
+        // 복사본 사용
+        this.start = new Date(start.getTime());
+        this.end = new Date(end.getTime());
+    }
+
+    public Date start() {
+        return new Date(start.getTime());
+    }
+
+    public Date end() {
+        return new Date(end.getTime());
+    }
+}
+```
+    객체의 clone 메서드를 사용하여 복사를 한다면
+    후에 확장되어 정의될 클래스에서 오버라이드 한 clone 메서드를 사용하게 될 수도 있으므로,
+    clone 메서드를 통하여 복사하지 않는 편이 좋다.
+    
+    매개변수를 방어적으로 복사하는 목적이 불변 객체를 만들기 위해서만은 아니다.
+    메서드든 생성자든 클라이언트가 제공한 객체의 참조를 내부의 자료구조에 보관해야 할 때면
+    항시 그 객체가 잠재적으로 변경될 수 있는지를 생각해야 한다.
+    
+    되도록 불변 객체들을 조합해 객체를 구성해야 방어적 복사를 할 일이 줄어든다.
+    메서드나 생성자의 매개변수로 넘기는 행위가 그 객체의 통제권을 명백히 이전함을 뜻하기도 한다.
+
 # item-1
 #### 정리
 #### 내용 추가
