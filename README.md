@@ -1765,6 +1765,136 @@ public final class Period {
     boolean 타입을 받아 사용하는 메서드보다는 열거 타입으로 만드는 편이 좋다.
     열거 타입이 나중에 컨디션을 추가할 때 더 유용하게 작용하며, 가독성도 좋다. 
 
+# item-52 다중정의는 신중히 사용하라
+#### 정리
+    다중정의 - 메서드명이 같지만 매개변수 타입이 다르거나 개수가 다름
+    다중정의 된 메서드 중 어떤 메서드가 호출될지는 컴파일 타임에 정해진다.
+    그 때문에 우리가 런타임때 변경될 타입을 염두해두고 다중정의를 했더라도 예상과는 다르게 흘러갈 경우가 있다.
+```java
+public class CollectionClassifier {
+
+    public static String classify(Set<?> s) {
+        return "집합";
+    }
+
+    public static String classify(List<?> list) {
+        return "리스트";
+    }
+
+    public static String classify(Collection<?> c) {
+        return "그 외";
+    }
+
+    public static void main(String[] args) {
+        Collection<?>[] collections = {
+                new HashSet<String>(),
+                new ArrayList<BigInteger>(),
+                new HashMap<String, String>().values()
+        };
+        for (Collection<?> c : collections) {
+            System.out.println(classify(c));
+        }
+    }
+}
+```
+    위에서는 "그 외" 라는 단어만 3번 출력된다.
+    이미 컬렉션 배열로 묶인 collections 객체는 classify 메서드의 매개변수로 Collection 타입의 객체가 넘어가기 때문
+    
+    재정의 - 상위 클래스의 메서드를 하위 클래스가 같은 시그니처 메서드로 정의하는 것
+    메서드를 실행하면 해당 메서드를 런타임 때에 객체에 맞게 재정의 된 메서드를 실행함
+```java
+public class Overriding {
+    public static void main(String[] args) {
+        List<Wine> wineList = List.of(new Wine(), new SparklingWine(), new Champagne());
+        for (Wine wine : wineList) {
+            System.out.println(wine.name());
+        }
+    }
+}
+
+class Wine {
+    String name() {
+        return "포도주";
+    }
+}
+
+class SparklingWine extends Wine {
+    @Override
+    String name() {
+        return "발포성 포도주";
+    }
+}
+
+class Champagne extends SparklingWine {
+    @Override
+    String name() {
+        return "샴페인";
+    }
+}
+```
+    재정의를 통하여 메서드를 실행했더니 프로그래머가 원하는대로 흘러감
+    
+    다중정의는 같은 내용을 실행하도록 만드는 편이 좋다.
+    사용자 입장에서 같은 방식으로 동작할거라고 예상하고 사용하기 때문이다.
+
+    다중정의 실패 예
+    remove 메서드에 매개변수가 Object 일 때, int 일 때
+    Object 는 해당 값과 같은 객체를 제거하고
+    int 는 해당 값과 같은 인덱스에 해당하는 객체를 제거한다.
+```java
+public class ArrayList<E> extends AbstractList<E>
+        implements List<E>, RandomAccess, Cloneable, java.io.Serializable
+{
+    public E remove(int index) {
+        Objects.checkIndex(index, size);
+        final Object[] es = elementData;
+
+        @SuppressWarnings("unchecked") E oldValue = (E) es[index];
+        fastRemove(es, index);
+
+        return oldValue;
+    }
+
+    public boolean remove(Object o) {
+        final Object[] es = elementData;
+        final int size = this.size;
+        int i = 0;
+        found: {
+            if (o == null) {
+                for (; i < size; i++)
+                    if (es[i] == null)
+                        break found;
+            } else {
+                for (; i < size; i++)
+                    if (o.equals(es[i]))
+                        break found;
+            }
+            return false;
+        }
+        fastRemove(es, i);
+        return true;
+    }
+
+}
+```
+    또한 함수형 인터페이스를 매개변수로 넘기는 경우에는 서로 다른 함수형 인터페이스라도 인수 위치가 같으면 혼란이 생긴다.
+    서로 다른 함수형 인터페이스라도 서로 근본적으로 다르지 않기 때문이다.
+    
+    submit 은 Callable 또는 Runnable 함수형 인터페이스를 매개변수로 갖는다.
+    return 값이 없는 Runnable 인터페이스로 예상 추론 하여 실행될 것 같지만
+    다중정의에 같은 함수형 인터페이스 매개변수로 인식하여 컴파일 오류가 발생함.
+```java
+public class OverridingThread {
+    public static void main(String[] args) {
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        executorService.submit(System.out::println); // 컴파일 오류
+    }
+}
+```
+    다중정의는 자바에서 허용하는 것일뿐 다중정의를 통하여 개발을 하라고 권유하는 것은 아니다.
+    다중정의는 잘못된 사용으로 인해 예상과는 다르게 흘러갈 수 있으므로,
+    다른 방법을 통하여 메서드를 정의하는 것이 좋다.
+    
 # item-1
 #### 정리
 #### 내용 추가
