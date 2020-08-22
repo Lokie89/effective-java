@@ -2010,7 +2010,7 @@ public class OverridingThread {
         - 여러 컬렉션을 병렬로 순회해야 할 때
     
     이럴 때를 제외하고는 대부분의 상황에서 for-each 문을 사용하는 것이 좋다.
-    Iteratable 인터페이스를 구현한 객체라면 for-each 문을 사용할 수 있다.
+    Iterable 인터페이스를 구현한 객체라면 for-each 문을 사용할 수 있다.
 
 # item-1
 #### 정리
