@@ -2028,6 +2028,12 @@ public class OverridingThread {
     표준 라이브러리를 사용하도록 시도해 본 후, 아니라면 서드파티 라이브러리를 사용해 본 후
     그 떄도 아니면 직접 구현하는 것이 좋다.
 
+# item-60 정확한 답이 필요하다면 float 과 double 은 피하라
+#### 정리
+    double 과 float 은 넓은 범위의 수를 빠르게 정밀한 '근사치' 로 계산하도록 설계되었다.
+    따라서 정확한 결과가 필요할 때는 사용하면 안 된다.
+    double 과 float 대신 BigDecimal 클래스 또는 int, long 을 사용해야 한다.
+
 # item-1
 #### 정리
 #### 내용 추가
