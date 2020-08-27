@@ -2237,6 +2237,25 @@ public class OverridingThread {
     검사 예외를 처리하기 위해선 try-catch 를 써야하고, 또 스트림에서 해당 메서드를 사용할 수 없다는 단점이 있다.
     그러니 꼭 필요한 때를 제외하고는 검사 예외를 다른 방법으로 대체하는 편이 좋다. 
     
+# item-72 표준 예외를 사용하라
+#### 정리
+    자바 라이브러리는 대부분 API 에서 쓰기에 충분한 수의 예외를 제공한다.
+    표준 예외를 재사용하면 얻는 게 많다.
+    API 를 다른 사람이 익히고 사용하기 쉬워지고, 예외 클래스 수가 적을수록 리소스가 적게든다.
+    
+|예외|주요쓰임|
+|--------------|--------------|
+|IllegalArgumentException|허용하지 않는 값이 인수로 건네졌을 때|
+|IllegalStateException|객체가 메서드를 수행하기에 적절하지 않은 상태일 때|
+|NullPointerException|null 을 허용하지 않는 메서드에 null 을 건넸을 때|
+|IndexOutOfBoundsException|인덱스가 범위를 넘어섰을 때|
+|ConcurrentModificationException|허용하지 않는 동시 수정이 발견됐을 때|
+|UnsupportedOperationException|호출한 메서드를 지원하지 않을 때|
+
+    예외는 예외의 이름 뿐 아니라 맥락도 부합할 때만 재사용한다.
+    만약 재사용 예외보다 더 많은 정보를 제공하고 싶다면 재사용 예외를 확장해도 좋다.
+    예외는 직렬화할 수 있다. 
+    
 # item-1
 #### 정리
 #### 내용 추가
