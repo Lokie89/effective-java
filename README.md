@@ -2445,6 +2445,78 @@ public class OverridingThread {
     클래스의 스레드 안전성은 보통 클래스의 문서화 주석에 기재하지만,
     독특한 특성의 메서드라면 해당 메서드의 주석에 기재하도록 하자
     
+# item-83 지연 초기화는 신중히 사용하라
+#### 정리
+    지연 초기화는 필드의 초기화 시점을 그 값이 처음 필요할 때까지 늦추는 기법이다.
+    지연 초기화는 주로 최적화 용도로 쓰이지만, 클래스와 인스턴스 초기화 때 발생하는
+    위험한 순환 문제를 해결하는 효과도 있다.
+    
+    다른 모든 최적화와 마찬가지로 지연 초기화에 대해 해줄 최선의 조언은 "필요할 때까지는 하지 말라" 이다.
+    클래스 혹은 인스턴스 생성 시의 초기화 비용은 줄지만 그 대신 지연 초기화가 이뤄지는 비율에 따라,
+    실제 초기화에 드는 비용에 따라, 초기화된 각 필드를 얼마나 빈번히 호출하느냐에 따라 지연 초기화가 느려질 수 있다.
+    
+    지연 초기화가 필요 할 때는 해당 클래스의 인스턴스 중 그 필드를 사용하는 인스턴스의 비율이 낮은 반면,
+    그 필드를 초기화하는 비용이 클 때이다.
+    
+    멀티 스레드 환경에서 지연 초기화하는 필드를 둘 이상의 스레드가 공유한다면 어떤 형태로든 반드시 동기화해야 한다.
+    
+    대부분의 상황에서는 일반적인 초기화가 지연 초기화보다 낫다.
+
+    (1) 지연 초기화가 초기화 순환성을 깨뜨릴 것 같으면 synchronized 를 단 접근자를 사용
+    (2) 성능 때문에 정적 필드를 지연 초기화해야 한다면 지연 초기화 홀더 클래스 관용구 사용
+    (3) 성능 때문에 인스턴스 필드를 지연 초기화해야 한다면 이중검사 관용구 사용
+```java
+public class LazyInitialization {
+
+    private final FieldType field = computeFieldValue(); // 일반적인 초기화
+
+    // -------------------------------------------------------
+
+    private FieldType field;
+    private synchronized FieldType getField(){
+        if(field == null){
+            field = computeFieldValue(); // 지연초기화 (1)
+        }
+        return field;
+    }
+
+    // -------------------------------------------------------
+
+    private static FieldType getField(){
+        return FieldHolder.field; // 정적 필드 지연 초기화 (2)
+    }
+
+    private static class FieldHolder{
+        static final FieldType field = computeFieldValue();
+        private static FieldType computeFieldValue(){
+            return new FieldType();
+        }
+    }
+
+    // -------------------------------------------------------
+
+    private volatile FieldType field;
+
+    private FieldType getField() {
+        FieldType result = field;
+        if (result != null) {
+            return result;
+        }
+        synchronized (this) { // 이중 검사 관용구 (3)
+            if (field == null) {
+                field = computeFieldValue();
+            }
+            return field;
+        }
+    }
+
+    private FieldType computeFieldValue() {
+        return new FieldType();
+    }
+
+}
+```
+    
 # item-1
 #### 정리
 #### 내용 추가
